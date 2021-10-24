@@ -116,15 +116,26 @@ void set_output_size(int num_outputs, int x, int y, int z, DATA_TYPE type)
     g_outdataType = type;
 }
 
+float getFloatOutput(int output, int x, int y, int z) {
+    return (float) g_CurrentResults[output](x,y,0,z);
+}
+
+std::string getResultsString() {
+    std::stringstream ss;
+    for(int i = 0; i < g_CurrentResults.size(); i++) {
+        ss << "Output " << i << ":";
+        for(int j = 0; j < g_xOutSize; j++) {
+            ss << std::fixed << std::setprecision( 2 ) << getFloatOutput(i,j,0,0) << " ";
+        }
+    }
+    return ss.str();
+}
+
+
+
 void printResultsData(std::vector<CImg<float>>& results) {
     std::cout << "Current results:" << std::endl;
-    for(int i = 0; i < results.size(); i++) {
-        std::cout << "Output " << i << ":";
-        for(int j = 0; j < g_xOutSize; j++) {
-            std::cout << std::fixed << std::setprecision( 2 ) << results[i](j,0,0,0) << " ";
-        }
-        std::cout << std::endl;
-    }
+    std::cout << getResultsString() << std::endl;
 }
 
 bool run_inference_on_next() {
