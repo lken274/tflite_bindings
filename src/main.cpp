@@ -36,6 +36,7 @@ enum INPUT_FORMAT
 };
 
 //prototypes
+void init_model(const char* modelpath);
 bool run_inference_on_next();
 std::vector<CImg<float>> run_inference(std::vector<CImg<unsigned char>> inputs);
 void set_output_size(int num_outputs, int x, int y, int z, DATA_TYPE type);
@@ -50,42 +51,45 @@ void display_image(CImg<T> &img, std::string imagename);
 int g_inputSize, g_xSize, g_ySize, g_zSize, g_dataType;
 bool g_normalise;
 int g_outputSize, g_xOutSize, g_yOutSize, g_zOutSize, g_outdataType;
-std::unique_ptr<tflite::Interpreter> interpreter;
+std::unique_ptr<tflite::Interpreter> g_interpreter;
+std::unique_ptr<tflite::FlatBufferModel> g_model;
 std::string g_model_filename;
 image_vector g_loaded_images;
 int g_currentImageIdx = 0;
 std::vector<CImg<float>> g_CurrentResults;
 
-int main(int argc, char *argv[])
-{
-    if (argc != 2)
-    {
-        fprintf(stderr, "minimal <tflite model>\n");
-        return 1;
-    }
-    const char *filename = argv[1];
+// int main(int argc, char *argv[])
+// {
+//     if (argc != 2)
+//     {
+//         fprintf(stderr, "minimal <tflite model>\n");
+//         return 1;
+//     }
+//     const char *filename = argv[1];
 
-    // Load model
-    std::unique_ptr<tflite::FlatBufferModel> model =
-        tflite::FlatBufferModel::BuildFromFile(filename);
-    TFLITE_MINIMAL_CHECK(model != nullptr);
+
+//     init_model(filename);
+//     set_input_size(1, 28, 28, 1, TF_FLOAT, true);
+//     set_output_size(1, 26, 1, 1, TF_FLOAT);
+//     load_csv_inputs("../model_data/sign_mnist_test/sign_mnist_test.csv");
+//     while(run_inference_on_next()) {
+//         printResultsData(g_CurrentResults);
+//         display_image(g_loaded_images[g_currentImageIdx-1], "Current input");
+//     }
+
+//     return 0;
+// }
+
+void init_model(const char* modelpath) {
+    g_model = tflite::FlatBufferModel::BuildFromFile(modelpath);
+    TFLITE_MINIMAL_CHECK(g_model != nullptr);
     tflite::ops::builtin::BuiltinOpResolver resolver;
-    tflite::InterpreterBuilder builder(*model, resolver);
-    builder(&interpreter);
-    TFLITE_MINIMAL_CHECK(interpreter != nullptr);
+    tflite::InterpreterBuilder builder(*g_model, resolver);
+    builder(&g_interpreter);
+    TFLITE_MINIMAL_CHECK(g_interpreter != nullptr);
 
-    // Allocate tensor buffers.
-    TFLITE_MINIMAL_CHECK(interpreter->AllocateTensors() == kTfLiteOk);
-
-    set_input_size(1, 28, 28, 1, TF_FLOAT, true);
-    set_output_size(1, 26, 1, 1, TF_FLOAT);
-    load_csv_inputs("../model_data/sign_mnist_test/sign_mnist_test.csv");
-    while(run_inference_on_next()) {
-        printResultsData(g_CurrentResults);
-        display_image(g_loaded_images[g_currentImageIdx-1], "Current input");
-    }
-
-    return 0;
+        // Allocate tensor buffers.
+    TFLITE_MINIMAL_CHECK(g_interpreter->AllocateTensors() == kTfLiteOk);
 }
 
 template <class T>
@@ -152,8 +156,8 @@ std::vector<CImg<float>> run_inference(std::vector<CImg<unsigned char>> inputs)
 {
     for (int inputIdx = 0; inputIdx < g_inputSize; inputIdx++)
     {
-        int input = interpreter->inputs()[inputIdx];
-        float *input_data_ptr = interpreter->typed_tensor<float>(input);
+        int input = g_interpreter->inputs()[inputIdx];
+        float *input_data_ptr = g_interpreter->typed_tensor<float>(input);
         for (int z = 0; z < g_zSize; z++)
         {
             for (int y = 0; y < g_ySize; y++)
@@ -165,13 +169,13 @@ std::vector<CImg<float>> run_inference(std::vector<CImg<unsigned char>> inputs)
             }
         }
     }
-    TFLITE_MINIMAL_CHECK(interpreter->Invoke() == kTfLiteOk);
+    TFLITE_MINIMAL_CHECK(g_interpreter->Invoke() == kTfLiteOk);
     // Read output buffers
     std::vector<CImg<float>> results;
     for (int outputIdx = 0; outputIdx < g_outputSize; outputIdx++)
     {
-        int output = interpreter->outputs()[outputIdx];
-        float *output_ptr = interpreter->typed_tensor<float>(output);
+        int output = g_interpreter->outputs()[outputIdx];
+        float *output_ptr = g_interpreter->typed_tensor<float>(output);
         CImg<float> resultVector(g_xOutSize, g_yOutSize, 1, g_zOutSize);
         for (int z = 0; z < g_zOutSize; z++)
         {
@@ -230,7 +234,6 @@ image_vector read_csv(std::string filename, int xSize, int ySize, int zSize, int
 
     // Helper vars
     std::string line;
-    unsigned char val;
 
     std::getline(myFile, line); //skip label line
     // Read data, line by line
