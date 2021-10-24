@@ -11,6 +11,7 @@
 #include <string>
 #include <iostream>
 #include <cstdarg>
+#define func extern "C" __declspec(dllexport)
 
 using namespace cimg_library;
 typedef std::vector<CImg<unsigned char>> image_vector;
@@ -36,13 +37,13 @@ enum INPUT_FORMAT
 };
 
 //prototypes
-void init_model(const char* modelpath);
-bool run_inference_on_next();
+func void init_model(const char* modelpath);
+func bool run_inference_on_next();
 std::vector<CImg<float>> run_inference(std::vector<CImg<unsigned char>> inputs);
-void set_output_size(int num_outputs, int x, int y, int z, DATA_TYPE type);
-void set_input_size(int num_inputs, int x, int y, int z, DATA_TYPE type, bool normalise);
+func void set_output_size(int num_outputs, int x, int y, int z, DATA_TYPE type);
+func void set_input_size(int num_inputs, int x, int y, int z, DATA_TYPE type, bool normalise);
 image_vector read_csv(std::string filename, int xSize, int ySize, int zSize, int numReads);
-void load_csv_inputs(std::string filename);
+func void load_csv_inputs(std::string filename);
 void printResultsData(std::vector<CImg<float>>& results);
 template <class T>
 void display_image(CImg<T> &img, std::string imagename);
@@ -101,7 +102,11 @@ void display_image(CImg<T> &img, std::string imagename)
     }
 }
 
-void set_input_size(int num_inputs, int x, int y, int z, DATA_TYPE type, bool normalise)
+func double check_dll_connected() {
+    return 1.0;
+}
+
+func void set_input_size(int num_inputs, int x, int y, int z, DATA_TYPE type, bool normalise)
 {
     g_inputSize = num_inputs;
     g_xSize = x;
@@ -111,7 +116,7 @@ void set_input_size(int num_inputs, int x, int y, int z, DATA_TYPE type, bool no
     g_normalise = normalise;
 }
 
-void set_output_size(int num_outputs, int x, int y, int z, DATA_TYPE type)
+func void set_output_size(int num_outputs, int x, int y, int z, DATA_TYPE type)
 {
     g_outputSize = num_outputs;
     g_xOutSize = x;
@@ -120,11 +125,11 @@ void set_output_size(int num_outputs, int x, int y, int z, DATA_TYPE type)
     g_outdataType = type;
 }
 
-float getFloatOutput(int output, int x, int y, int z) {
+func float getFloatOutput(int output, int x, int y, int z) {
     return (float) g_CurrentResults[output](x,y,0,z);
 }
 
-std::string getResultsString() {
+func std::string getResultsString() {
     std::stringstream ss;
     for(int i = 0; i < g_CurrentResults.size(); i++) {
         ss << "Output " << i << ":";
@@ -142,7 +147,7 @@ void printResultsData(std::vector<CImg<float>>& results) {
     std::cout << getResultsString() << std::endl;
 }
 
-bool run_inference_on_next() {
+func bool run_inference_on_next() {
     std::vector<CImg<unsigned char>> inputs;
     for(int i = 0; i < g_inputSize; i++) {
         if (i >= g_loaded_images.size()) return false;
@@ -211,7 +216,7 @@ std::vector<std::string> split(const std::string &s, char delim)
     return elems;
 }
 
-void load_csv_inputs(std::string filename)
+func void load_csv_inputs(std::string filename)
 {
     g_loaded_images = read_csv(filename, g_xSize, g_ySize, g_zSize, -1);
 }
