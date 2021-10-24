@@ -12,6 +12,7 @@
 #include <string>
 #include <iostream>
 #include <map>
+#include <cstdarg>
 // This is an example that is minimal to read a model
 // from disk and perform inference. There is no data being loaded
 // that is up to you to add as a user.
@@ -30,8 +31,16 @@ typedef std::vector<CImg<unsigned char>> csv_file;
     exit(1);                                                 \
   }
 
-csv_file read_csv(std::string filename, int xSize, int ySize, int zSize, int numReads);
+enum DATA_TYPE {
+    TF_FLOAT,
+    TF_UINT8
+};
+std::vector<CImg<float>> run_inference(std::vector<CImg<unsigned char>> inputs);
+void set_output_size(int num_outputs, int x, int y, int z, DATA_TYPE type);
+void set_input_size(int num_inputs, int x, int y, int z, DATA_TYPE type, bool normalise);
 
+csv_file read_csv(std::string filename, int xSize, int ySize, int zSize, int numReads);
+std::unique_ptr<tflite::Interpreter> interpreter;
 int main(int argc, char* argv[]) {
   if (argc != 2) {
     fprintf(stderr, "minimal <tflite model>\n");
@@ -50,20 +59,12 @@ int main(int argc, char* argv[]) {
   // tasks so that the Interpreter can read the provided model.
   tflite::ops::builtin::BuiltinOpResolver resolver;
   tflite::InterpreterBuilder builder(*model, resolver);
-  std::unique_ptr<tflite::Interpreter> interpreter;
   builder(&interpreter);
   TFLITE_MINIMAL_CHECK(interpreter != nullptr);
 
   // Allocate tensor buffers.
   TFLITE_MINIMAL_CHECK(interpreter->AllocateTensors() == kTfLiteOk);
- // printf("=== Pre-invoke Interpreter State ===\n");
-  //tflite::PrintInterpreterState(interpreter.get());
 
-  // Fill input buffers
-  // TODO(user): Insert code to fill input tensors.
-  // Note: The buffer of the input tensor with index `i` of type T can
-  // be accessed with `T* input = interpreter->typed_input_tensor<T>(i);`
-  
   csv_file testData = read_csv("../model_data/sign_mnist_test/sign_mnist_test.csv", 28, 28, 1, 100);
 //  std::cout << "Drawing image 0" << std::endl;
 
@@ -72,40 +73,73 @@ int main(int argc, char* argv[]) {
 //       while(!dsp.is_closed()) {
 //       }
 //   }
-
-  // Run inference
-  for(int idx = 0; idx < 100; idx++) {
-    int input_tensor_idx = 0;
-    int input = interpreter->inputs()[input_tensor_idx];
-    float* input_data_ptr = interpreter->typed_tensor<float>(input);
-    for(int k = 0; k < 1; k++) {
-            for(int j = 0; j < 28; j++) {
-                for(int i = 0; i < 28; i++) {
-                    //input
-                    input_data_ptr[k*28*28 + j*28 + i] = (float)(testData[idx](i,j,0,k) / 255.0);
-                }
-            }
+    set_input_size(1,28,28,1,TF_FLOAT,true);
+    set_output_size(1,26,1,1,TF_FLOAT);
+    CImgDisplay dsp(testData[0].resize(128,128,1,1,2), "test", 0);
+    while(!dsp.is_closed()) {
     }
-    TFLITE_MINIMAL_CHECK(interpreter->Invoke() == kTfLiteOk);
-
-    // Read output buffers
-    float max_confidence = 0;
-    int index = -1;
-    int output_tensor_idx = 0;
-    int output = interpreter->outputs()[output_tensor_idx];
-    float* output_ptr = interpreter->typed_tensor<float>(output);
-    for(int i = 0; i < 25; i++) {
-        float outputVal = *(output_ptr+i);
-        //std::cout << i << ":" << outputVal << std::endl;
-        if (outputVal > max_confidence) {
-            max_confidence = outputVal;
-            index = i;
-        }
-    }
-    std::cout << "inference result is: " << index << std::endl;
-    }
+    run_inference({testData[0]});
 
   return 0;
+}
+
+
+
+int g_inputSize, g_xSize, g_ySize, g_zSize, g_dataType;
+bool g_normalise;
+int g_outputSize, g_xOutSize, g_yOutSize, g_zOutSize, g_outdataType;
+
+void set_input_size(int num_inputs, int x, int y, int z, DATA_TYPE type, bool normalise) {
+    g_inputSize = num_inputs;
+    g_xSize = x;
+    g_ySize = y;
+    g_zSize = z;
+    g_dataType = type;
+    g_normalise = normalise;
+}
+
+void set_output_size(int num_outputs, int x, int y, int z, DATA_TYPE type) {
+    g_outputSize = num_outputs;
+    g_xOutSize = x;
+    g_yOutSize = y;
+    g_zOutSize = z;
+    g_outdataType = type;
+}
+
+std::vector<CImg<float>> run_inference(std::vector<CImg<unsigned char>> inputs) {
+    for (int inputIdx = 0; inputIdx < g_inputSize; inputIdx++) {
+        int input = interpreter->inputs()[inputIdx];
+        float* input_data_ptr = interpreter->typed_tensor<float>(input);
+        for (int z = 0; z < g_zSize; z++) {
+            for(int y = 0; y < g_ySize; y++) {
+                for(int x = 0; x < g_xSize; x++) {
+                    input_data_ptr[z*g_ySize*g_xSize + y*g_xSize + x] = (float)(inputs[inputIdx](x,y,0,z))/ (g_normalise ? 255.0 : 1.0);
+                }
+            }
+        }
+    }
+    TFLITE_MINIMAL_CHECK(interpreter->Invoke() == kTfLiteOk);
+    // Read output buffers
+    std::vector<CImg<float>> results;
+    for (int outputIdx = 0; outputIdx < g_outputSize; outputIdx++) {
+        int output = interpreter->outputs()[outputIdx];
+        float* output_ptr = interpreter->typed_tensor<float>(output);
+        CImg<float> resultVector(g_xOutSize, g_yOutSize, 1, g_zOutSize);
+        for(int z = 0; z < g_zOutSize; z++) {
+            for(int y = 0; y < g_yOutSize; y++) {
+                for(int x = 0; x < g_xOutSize; x++) {
+                    float outputVal = *(output_ptr + z*g_yOutSize*g_xOutSize+y*g_xOutSize+x);
+                    std::cout <<"got output val " << outputVal << std::endl;
+                    resultVector.draw_point(x,y,z,&outputVal);
+                }
+            }
+        }
+        results.push_back(resultVector);
+    }
+    
+    // for(int i = 0; i < g_xOutSize; i++)
+    //     std::cout << "inference result is: " << results[0](i,0,0,0) << std::endl;
+    return results;
 }
 
 template <typename Out>
