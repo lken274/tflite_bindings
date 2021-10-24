@@ -36,10 +36,12 @@ enum INPUT_FORMAT
 };
 
 //prototypes
+bool run_inference_on_next();
 std::vector<CImg<float>> run_inference(std::vector<CImg<unsigned char>> inputs);
 void set_output_size(int num_outputs, int x, int y, int z, DATA_TYPE type);
 void set_input_size(int num_inputs, int x, int y, int z, DATA_TYPE type, bool normalise);
 image_vector read_csv(std::string filename, int xSize, int ySize, int zSize, int numReads);
+void load_csv_inputs(std::string filename);
 void printResultsData(std::vector<CImg<float>>& results);
 template <class T>
 void display_image(CImg<T> &img, std::string imagename);
@@ -51,6 +53,8 @@ int g_outputSize, g_xOutSize, g_yOutSize, g_zOutSize, g_outdataType;
 std::unique_ptr<tflite::Interpreter> interpreter;
 std::string g_model_filename;
 image_vector g_loaded_images;
+int g_currentImageIdx = 0;
+std::vector<CImg<float>> g_CurrentResults;
 
 int main(int argc, char *argv[])
 {
@@ -73,15 +77,12 @@ int main(int argc, char *argv[])
     // Allocate tensor buffers.
     TFLITE_MINIMAL_CHECK(interpreter->AllocateTensors() == kTfLiteOk);
 
-    image_vector testData = read_csv("../model_data/sign_mnist_test/sign_mnist_test.csv", 28, 28, 1, 100);
     set_input_size(1, 28, 28, 1, TF_FLOAT, true);
     set_output_size(1, 26, 1, 1, TF_FLOAT);
-
-    for(auto& image : testData) {
-        auto results = run_inference({image});
-        printResultsData(results);
-        display_image(image, "Current input");
-        
+    load_csv_inputs("../model_data/sign_mnist_test/sign_mnist_test.csv");
+    while(run_inference_on_next()) {
+        printResultsData(g_CurrentResults);
+        display_image(g_loaded_images[g_currentImageIdx-1], "Current input");
     }
 
     return 0;
@@ -124,6 +125,16 @@ void printResultsData(std::vector<CImg<float>>& results) {
         }
         std::cout << std::endl;
     }
+}
+
+bool run_inference_on_next() {
+    std::vector<CImg<unsigned char>> inputs;
+    for(int i = 0; i < g_inputSize; i++) {
+        if (i >= g_loaded_images.size()) return false;
+        inputs.push_back(g_loaded_images[g_currentImageIdx++]);
+    }
+    g_CurrentResults = run_inference(inputs);
+    return true;
 }
 
 std::vector<CImg<float>> run_inference(std::vector<CImg<unsigned char>> inputs)
