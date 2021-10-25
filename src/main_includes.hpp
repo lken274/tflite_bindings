@@ -13,6 +13,7 @@
 #include <iostream>
 #include <cstdarg>
 #include <any>
+#include <ndarray.hpp>
 
 using namespace cimg_library;
 

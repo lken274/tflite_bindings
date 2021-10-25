@@ -31,6 +31,6 @@ add_subdirectory(
   EXCLUDE_FROM_ALL
 )
 
-target_link_libraries(${PROJECT_NAME} tensorflow-lite cimglib)
+target_link_libraries(${PROJECT_NAME} tensorflow-lite cimglib aconslib)
 #target_link_options(${PROJECT_NAME}  PRIVATE -static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lpthread -Wl,-Bdynamic )
 target_link_options(${PROJECT_NAME}  PRIVATE -static)
