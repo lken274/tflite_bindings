@@ -50,14 +50,14 @@ func void set_output_size(const char* num_outputs, const char* x, const char* y,
 }
 
 func const char* get_input_size_string() {
-    std::string output = "num:" + std::to_string(g_inputSize) + ",x:" + std::to_string(g_xSize) + ",y:" + std::to_string(g_ySize) + ",z:" + std::to_string(g_zSize);
-    std::cout << output << std::endl;
+    static std::string output;
+    output = "num:" + std::to_string(g_inputSize) + ",x:" + std::to_string(g_xSize) + ",y:" + std::to_string(g_ySize) + ",z:" + std::to_string(g_zSize);
     return output.c_str();
 }
 
 func const char* get_output_size_string() {
-    std::string output = "num:" + std::to_string(g_outputSize) + ",x:" + std::to_string(g_xOutSize) + ",y:" + std::to_string(g_yOutSize) + ",z:" + std::to_string(g_zOutSize);
-    std::cout << output << std::endl;
+    static std::string output;
+    output = "num:" + std::to_string(g_outputSize) + ",x:" + std::to_string(g_xOutSize) + ",y:" + std::to_string(g_yOutSize) + ",z:" + std::to_string(g_zOutSize);
     return output.c_str();
 }
 
@@ -65,8 +65,8 @@ func const char* run_inference_on_next() {
     std::cout << "Running single inference" << std::endl;
     std::vector<CImg<float>> inputs;
     for(int i = 0; i < g_inputSize; i++) {
-        if (i >= g_loaded_images.size()) return "0";
-        inputs.push_back(g_loaded_images[g_currentImageIdx++]);
+        if (i >= g_loaded_float_inputs.size()) return "0";
+        inputs.push_back(g_loaded_float_inputs[g_currentImageIdx++]);
     }
     g_CurrentFloatResults = run_inference<float>(inputs);
     return "1";
@@ -74,21 +74,34 @@ func const char* run_inference_on_next() {
 
 func void load_csv_inputs(const char* filename)
 {
-    g_loaded_images = read_csv(filename, g_xSize, g_ySize, g_zSize, -1);
-    std::cout << "Loaded " << g_loaded_images.size() << " images" << std::endl;
+    if(g_dataType == TF_FLOAT) {
+        read_float_csv(filename, g_xSize, g_ySize, g_zSize, -1);
+        std::cout << "Loaded " << g_loaded_float_inputs.size() << " images" << std::endl;
+    }
 }
 
-
+func const char* getOutputAsStr(int output, int x, int y, int z) {
+    if (g_dataType == TF_FLOAT) {
+        return getFloatOutput(output, x, y, z);
+    }
+    else if (g_dataType == TF_UINT8) {
+        return getIntOutput(output,x,y,z);
+    }
+    else return getStringOutput(output,x,y,z);
+}
 
 func const char* get_results_string() {
     std::stringstream ss;
-    for(size_t i = 0; i < g_CurrentFloatResults.size(); i++) {
+    static std::string output;
+    for(size_t i = 0; i < g_outputSize; i++) {
         ss << "Output " << i << ":";
-        for(int j = 0; j < g_xOutSize; j++) {
-            ss << std::fixed << std::setprecision( 2 ) << getFloatOutput(i,j,0,0) << " ";
-        }
+        for(int z = 0; z < g_zOutSize; z++)
+            for(int y = 0; y < g_yOutSize; y++)
+                for(int x = 0; x < g_xOutSize; x++) {
+                    ss << getOutputAsStr(i,x,y,z) << " ";
+                }
     }
-    std::string output = ss.str().substr(0, ss.str().size() - 1);
+    output = ss.str().substr(0, ss.str().size() - 1);
     return output.c_str();
 }
 

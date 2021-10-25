@@ -9,10 +9,11 @@ int g_outputSize, g_xOutSize, g_yOutSize, g_zOutSize;
 std::unique_ptr<tflite::Interpreter> g_interpreter;
 std::unique_ptr<tflite::FlatBufferModel> g_model;
 std::string g_model_filename;
-std::vector<CImg<float>> g_loaded_images;
+std::vector<CImg<float>> g_loaded_float_inputs;
+std::vector<CImg<std::string>> g_loaded_string_inputs;
 int g_currentImageIdx = 0;
 
 std::vector<CImg<float>> g_CurrentFloatResults;
 std::vector<CImg<uint8_t>> g_CurrentIntResults;
-std::vector<CImg<const char*>> g_CurrentStringResults;
+std::vector<CImg<std::string>> g_CurrentStringResults;
 
