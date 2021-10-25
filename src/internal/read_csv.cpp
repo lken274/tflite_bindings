@@ -19,6 +19,42 @@ std::vector<std::string> split(const std::string &s, char delim)
     return elems;
 }
 
+void read_float_direct(const char* inputString, int xSize, int ySize, int zSize) {
+    std::string strInputString = std::string(inputString);
+    std::vector<std::string> pixelVals = split(strInputString, ',');
+    CImg<float> result(xSize, ySize, 1, zSize, 0);
+    for (int k = 0; k < zSize; k++)
+    {
+        for (int j = 0; j < ySize; j++)
+        {
+            for (int i = 0; i < xSize; i++)
+            {
+                float pix_val = std::stof(pixelVals[k * ySize * xSize + j * xSize + i + 1]);
+                result.draw_point(i, j, k, &pix_val);
+            }
+        }
+    }
+    g_loaded_float_inputs = {result};
+}
+
+void read_uint8_direct(const char* inputString, int xSize, int ySize, int zSize) {
+    std::string strInputString = std::string(inputString);
+    std::vector<std::string> pixelVals = split(strInputString, ',');
+    CImg<uint8_t> result(xSize, ySize, 1, zSize, 0);
+    for (int k = 0; k < zSize; k++)
+    {
+        for (int j = 0; j < ySize; j++)
+        {
+            for (int i = 0; i < xSize; i++)
+            {
+                uint8_t pix_val = std::stoul(pixelVals[k * ySize * xSize + j * xSize + i + 1]);
+                result.draw_point(i, j, k, &pix_val);
+            }
+        }
+    }
+    g_loaded_uint8_inputs = {result};
+}
+
 void read_float_csv(const char* filename, int xSize, int ySize, int zSize, int numReads)
 {
     // Create a vector of <string, int vector> pairs to store the result

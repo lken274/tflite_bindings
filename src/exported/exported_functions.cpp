@@ -82,17 +82,24 @@ func void load_csv_inputs(const char* filename)
     g_currentImageIdx = 0;
     if(g_dataType == TF_FLOAT) {
         read_float_csv(filename, g_xSize, g_ySize, g_zSize, -1);
-        std::cout << "Loaded " << g_loaded_float_inputs.size() << " images" << std::endl;
+        std::cout << "Loaded " << g_loaded_float_inputs.size() << " inputs" << std::endl;
     }
     else if (g_dataType == TF_UINT8) {
         read_uint8_csv(filename, g_xSize, g_ySize, g_zSize, -1);
-        std::cout << "Loaded " << g_loaded_uint8_inputs.size() << " images" << std::endl;
+        std::cout << "Loaded " << g_loaded_uint8_inputs.size() << " inputs" << std::endl;
     }
 }
 
 func void load_direct_inputs(const char* inputString) {
-    //parse string
-    //TODO
+    g_currentImageIdx = 0;
+    if(g_dataType == TF_FLOAT) {
+        read_float_direct(inputString, g_xSize, g_ySize, g_zSize);
+        std::cout << "Loaded " << g_loaded_float_inputs.size() << " inputs" << std::endl;
+    }
+    else if (g_dataType == TF_UINT8) {
+        read_uint8_direct(inputString, g_xSize, g_ySize, g_zSize);
+        std::cout << "Loaded " << g_loaded_uint8_inputs.size() << " inputs" << std::endl;
+    }
 }
 
 func const char* getOutputAsStr(int output, int x, int y, int z) {
