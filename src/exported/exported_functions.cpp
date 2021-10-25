@@ -16,8 +16,8 @@ func double check_dll_connected() {
     return 1.0;
 }
 
-func void set_data_type(const char* inputDataType, const char* doNormalise, const char* outputDataType) {
-    std::string strDataType = std::string(inputDataType);
+func void set_data_type(const char* dataType, const char* doNormalise) {
+    std::string strDataType = std::string(dataType);
     if (strDataType == "float") {
         g_dataType = TF_FLOAT;
     }
@@ -28,18 +28,6 @@ func void set_data_type(const char* inputDataType, const char* doNormalise, cons
         g_dataType = TF_STRING;
     }
     else g_dataType = TF_FLOAT;
-
-    std::string strOutputDataType = std::string(outputDataType);
-    if (strOutputDataType == "float") {
-        g_outdataType = TF_FLOAT;
-    }
-    else if (strOutputDataType == "uint8") {
-        g_outdataType = TF_UINT8;
-    }
-    else if (strOutputDataType == "string"){
-        g_outdataType = TF_STRING;
-    }
-    else g_outdataType = TF_FLOAT;
 
     std::string strDoNormalise = std::string(doNormalise);
     if (strDoNormalise == "true") g_normalise = true;
@@ -75,12 +63,12 @@ func const char* get_output_size_string() {
 
 func const char* run_inference_on_next() {
     std::cout << "Running single inference" << std::endl;
-    std::vector<CImg<unsigned char>> inputs;
+    std::vector<CImg<float>> inputs;
     for(int i = 0; i < g_inputSize; i++) {
         if (i >= g_loaded_images.size()) return "0";
         inputs.push_back(g_loaded_images[g_currentImageIdx++]);
     }
-    g_CurrentFloatResults = run_inference(inputs);
+    g_CurrentFloatResults = run_inference<float>(inputs);
     return "1";
 }
 
@@ -90,9 +78,7 @@ func void load_csv_inputs(const char* filename)
     std::cout << "Loaded " << g_loaded_images.size() << " images" << std::endl;
 }
 
-func float getFloatOutput(int output, int x, int y, int z) {
-    return (float) g_CurrentFloatResults[output](x,y,0,z);
-}
+
 
 func const char* get_results_string() {
     std::stringstream ss;

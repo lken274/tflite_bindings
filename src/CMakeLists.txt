@@ -1,4 +1,4 @@
-set(SOURCE main.cpp exported_functions.cpp internal_functions.cpp)
+file(GLOB_RECURSE SOURCE "*.cpp" "*.hpp")
 
 # Create our library target
 add_library(${PROJECT_NAME} SHARED)
@@ -6,7 +6,7 @@ add_library(${PROJECT_NAME} SHARED)
 target_sources(${PROJECT_NAME} PUBLIC ${SOURCE})
 
 #add_executable(${PROJECT_NAME} ${SOURCE})
-target_include_directories(${PROJECT_NAME} PUBLIC . ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${PROJECT_NAME} PUBLIC . ${CMAKE_CURRENT_SOURCE_DIR} ./internal ./exported)
 set_target_properties(${PROJECT_NAME}
 PROPERTIES
     VERSION ${PROJECT_VERSION}
@@ -15,7 +15,7 @@ PROPERTIES
 # Let's set compiler-specific flags
 if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     # G++
-    target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra )
+    target_compile_options(${PROJECT_NAME} PRIVATE -Werror )
 elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
     # MSVC
     target_compile_options(${PROJECT_NAME} PRIVATE /EHsc /MTd /W2 /c)

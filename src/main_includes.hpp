@@ -15,7 +15,6 @@
 #include <any>
 
 using namespace cimg_library;
-typedef std::vector<CImg<unsigned char>> image_vector;
 
 #define TFLITE_MINIMAL_CHECK(x)                                  \
     if (!(x))                                                    \
@@ -39,12 +38,15 @@ enum INPUT_FORMAT
 };
 
 extern int g_inputSize, g_xSize, g_ySize, g_zSize;
-extern DATA_TYPE g_dataType, g_outdataType;
+extern DATA_TYPE g_dataType;
 extern bool g_normalise;
 extern int g_outputSize, g_xOutSize, g_yOutSize, g_zOutSize;
 extern std::unique_ptr<tflite::Interpreter> g_interpreter;
 extern std::unique_ptr<tflite::FlatBufferModel> g_model;
 extern std::string g_model_filename;
-extern image_vector g_loaded_images;
+extern std::vector<CImg<float>>  g_loaded_images;
 extern int g_currentImageIdx;
+
 extern std::vector<CImg<float>> g_CurrentFloatResults;
+extern std::vector<CImg<uint8_t>> g_CurrentIntResults;
+extern std::vector<CImg<const char*>> g_CurrentStringResults;
