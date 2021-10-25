@@ -13,4 +13,4 @@ func void load_csv_inputs(const char* filename);
 func void printResultsData();
 func const char* getFloatOutput(int output, int x, int y, int z);
 func const char* getIntOutput(int output, int x, int y, int z);
-func const char* getStringOutput(int output, int x, int y, int z);
+func void set_data_type(const char* dataType, const char* doNormalise);

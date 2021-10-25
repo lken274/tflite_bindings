@@ -13,6 +13,7 @@ func void init_model(const char* modelpath) {
 }
 
 func double check_dll_connected() {
+    std::cout << "tflite dll connected" << std::endl;
     return 1.0;
 }
 
@@ -20,17 +21,19 @@ func void set_data_type(const char* dataType, const char* doNormalise) {
     std::string strDataType = std::string(dataType);
     if (strDataType == "float") {
         g_dataType = TF_FLOAT;
+        std::cout << "Setting data type to float32" << std::endl;
     }
     else if (strDataType == "uint8") {
         g_dataType = TF_UINT8;
-    }
-    else if (strDataType == "string"){
-        g_dataType = TF_STRING;
+        std::cout << "Setting data type to uint8" << std::endl;
     }
     else g_dataType = TF_FLOAT;
 
     std::string strDoNormalise = std::string(doNormalise);
-    if (strDoNormalise == "true") g_normalise = true;
+    if (strDoNormalise == "true")  {
+        std::cout << "Normalisation of inputs enabled" << std::endl;
+        g_normalise = true;
+    }
     else g_normalise = false;
 }
 func void set_input_size(const char* num_inputs, const char* x, const char* y, const char* z/*, const char* type, const char* normalise*/)
@@ -39,6 +42,7 @@ func void set_input_size(const char* num_inputs, const char* x, const char* y, c
     g_xSize = std::stoi(x);
     g_ySize = std::stoi(y);
     g_zSize = std::stoi(z);
+    std::cout << "Input size set to: " << g_inputSize << "," << g_xSize << "," << g_ySize << "," << g_zSize << std::endl;
 }
 
 func void set_output_size(const char* num_outputs, const char* x, const char* y, const char* z/*, DATA_TYPE type */)
@@ -47,6 +51,7 @@ func void set_output_size(const char* num_outputs, const char* x, const char* y,
     g_xOutSize = std::stoi(x);
     g_yOutSize = std::stoi(y);
     g_zOutSize = std::stoi(z);
+    std::cout << "Output size set to: " << g_outputSize << "," << g_xOutSize << "," << g_yOutSize << "," << g_zOutSize << std::endl;
 }
 
 func const char* get_input_size_string() {
@@ -68,16 +73,26 @@ func const char* run_inference_on_next() {
         if (i >= g_loaded_float_inputs.size()) return "0";
         inputs.push_back(g_loaded_float_inputs[g_currentImageIdx++]);
     }
-    g_CurrentFloatResults = run_inference<float>(inputs);
+    g_current_float_results = run_inference<float>(inputs);
     return "1";
 }
 
 func void load_csv_inputs(const char* filename)
 {
+    g_currentImageIdx = 0;
     if(g_dataType == TF_FLOAT) {
         read_float_csv(filename, g_xSize, g_ySize, g_zSize, -1);
         std::cout << "Loaded " << g_loaded_float_inputs.size() << " images" << std::endl;
     }
+    else if (g_dataType == TF_UINT8) {
+        read_uint8_csv(filename, g_xSize, g_ySize, g_zSize, -1);
+        std::cout << "Loaded " << g_loaded_uint8_inputs.size() << " images" << std::endl;
+    }
+}
+
+func void load_direct_inputs(const char* inputString) {
+    //parse string
+    //TODO
 }
 
 func const char* getOutputAsStr(int output, int x, int y, int z) {
@@ -87,7 +102,7 @@ func const char* getOutputAsStr(int output, int x, int y, int z) {
     else if (g_dataType == TF_UINT8) {
         return getIntOutput(output,x,y,z);
     }
-    else return getStringOutput(output,x,y,z);
+    else return getFloatOutput(output, x, y, z);
 }
 
 func const char* get_results_string() {

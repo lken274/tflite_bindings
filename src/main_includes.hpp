@@ -28,8 +28,7 @@ using namespace cimg_library;
 enum DATA_TYPE
 {
     TF_FLOAT,
-    TF_UINT8,
-    TF_STRING
+    TF_UINT8
 };
 enum INPUT_FORMAT
 {
@@ -46,9 +45,7 @@ extern std::unique_ptr<tflite::Interpreter> g_interpreter;
 extern std::unique_ptr<tflite::FlatBufferModel> g_model;
 extern std::string g_model_filename;
 extern std::vector<CImg<float>>  g_loaded_float_inputs;
-extern std::vector<CImg<std::string>> g_loaded_string_inputs;
+extern std::vector<CImg<uint8_t>>  g_loaded_uint8_inputs;
 extern int g_currentImageIdx;
-
-extern std::vector<CImg<float>> g_CurrentFloatResults;
-extern std::vector<CImg<uint8_t>> g_CurrentIntResults;
-extern std::vector<CImg<std::string>> g_CurrentStringResults;
+extern std::vector<CImg<float>> g_current_float_results;
+extern std::vector<CImg<uint8_t>>  g_current_uint8_results;
