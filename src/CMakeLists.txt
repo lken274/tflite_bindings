@@ -1,4 +1,4 @@
-set(SOURCE main.cpp)
+set(SOURCE main.cpp exported_functions.cpp internal_functions.cpp)
 
 # Create our library target
 add_library(${PROJECT_NAME} SHARED)
