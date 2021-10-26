@@ -68,12 +68,22 @@ func const char* get_output_size_string() {
 
 func const char* run_inference_on_next() {
     std::cout << "Running single inference" << std::endl;
-    std::vector<CImg<float>> inputs;
-    for(int i = 0; i < g_inputSize; i++) {
-        if (i >= g_loaded_float_inputs.size()) return "0";
-        inputs.push_back(g_loaded_float_inputs[g_currentImageIdx++]);
+    if (g_dataType == TF_FLOAT) {
+        std::vector<CImg<float>> inputs;
+        for(int i = 0; i < g_inputSize; i++) {
+            if (i >= g_loaded_float_inputs.size()) return "0";
+            inputs.push_back(g_loaded_float_inputs[g_currentImageIdx++]);
+        }
+        g_current_float_results = run_inference<float>(inputs);
     }
-    g_current_float_results = run_inference<float>(inputs);
+    else if (g_dataType == TF_UINT8) {
+        std::vector<CImg<uint8_t>> inputs;
+        for(int i = 0; i < g_inputSize; i++) {
+            if (i >= g_loaded_uint8_inputs.size()) return "0";
+            inputs.push_back(g_loaded_uint8_inputs[g_currentImageIdx++]);
+        }
+        g_current_uint8_results = run_inference<uint8_t>(inputs);
+    }
     return "1";
 }
 

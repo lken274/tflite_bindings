@@ -1,5 +1,6 @@
 #pragma once
 #include "../main_includes.hpp"
+#include "display_image.hpp"
 
 template <class U>
 std::vector<CImg<U>> run_inference(std::vector<CImg<U>> inputs)
@@ -8,7 +9,7 @@ std::vector<CImg<U>> run_inference(std::vector<CImg<U>> inputs)
     for (int inputIdx = 0; inputIdx < g_inputSize; inputIdx++)
     {
         int input = g_interpreter->inputs()[inputIdx];
-        float *input_data_ptr = g_interpreter->typed_tensor<U>(input);
+        U *input_data_ptr = g_interpreter->typed_tensor<U>(input);
         for (int z = 0; z < g_zSize; z++)
         {
             for (int y = 0; y < g_ySize; y++)
@@ -42,5 +43,6 @@ std::vector<CImg<U>> run_inference(std::vector<CImg<U>> inputs)
         }
         results.push_back(resultVector);
     }
+    //display_image(inputs[0], "image test");
     return results;
 }

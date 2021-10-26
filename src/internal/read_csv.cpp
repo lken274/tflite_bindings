@@ -1,5 +1,6 @@
 #include "read_csv.hpp"
 #include "../main_includes.hpp"
+#include "../internal/display_image.hpp "
 
 template <typename Out>
 void split(const std::string &s, char delim, Out result)
@@ -29,7 +30,7 @@ void read_float_direct(const char* inputString, int xSize, int ySize, int zSize)
         {
             for (int i = 0; i < xSize; i++)
             {
-                float pix_val = std::stof(pixelVals[k * ySize * xSize + j * xSize + i + 1]);
+                float pix_val = std::stof(pixelVals[k * ySize * xSize + j * xSize + i ]);
                 result.draw_point(i, j, k, &pix_val);
             }
         }
@@ -47,7 +48,7 @@ void read_uint8_direct(const char* inputString, int xSize, int ySize, int zSize)
         {
             for (int i = 0; i < xSize; i++)
             {
-                uint8_t pix_val = std::stoul(pixelVals[k * ySize * xSize + j * xSize + i + 1]);
+                uint8_t pix_val = std::stoul(pixelVals[k * ySize * xSize + j * xSize + i]);
                 result.draw_point(i, j, k, &pix_val);
             }
         }
